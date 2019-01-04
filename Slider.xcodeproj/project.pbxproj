@@ -7,14 +7,24 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1A450CF921CB2C2E00AF5866 /* what-a-rush.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 1A450CF821CB2C2E00AF5866 /* what-a-rush.mp3 */; };
+		1A450CFB21CB2E5B00AF5866 /* boop.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1A450CFA21CB2E5B00AF5866 /* boop.wav */; };
+		1A450CFD21CB2E7600AF5866 /* complete.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1A450CFC21CB2E7600AF5866 /* complete.wav */; };
 		1A76B94521C464D90048A4FB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A76B94421C464D90048A4FB /* AppDelegate.swift */; };
 		1A76B94721C464D90048A4FB /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A76B94621C464D90048A4FB /* ViewController.swift */; };
 		1A76B94A21C464D90048A4FB /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1A76B94821C464D90048A4FB /* Main.storyboard */; };
 		1A76B94C21C464DA0048A4FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A76B94B21C464DA0048A4FB /* Assets.xcassets */; };
 		1A76B94F21C464DA0048A4FB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1A76B94D21C464DA0048A4FB /* LaunchScreen.storyboard */; };
+		1A76B95721C7DB500048A4FB /* Live-better-Stock-pot-on--011.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 1A76B95621C7DB4F0048A4FB /* Live-better-Stock-pot-on--011.jpg */; };
+		1A9F09F521DFDE62002591C1 /* GridViewConroller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A9F09F421DFDE62002591C1 /* GridViewConroller.swift */; };
+		1AE768A121DFDCF100329171 /* AIGridSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE768A021DFDCF100329171 /* AIGridSolver.swift */; };
+		1AE768A321DFDDB900329171 /* SliderGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE768A221DFDDB900329171 /* SliderGrid.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1A450CF821CB2C2E00AF5866 /* what-a-rush.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "what-a-rush.mp3"; sourceTree = "<group>"; };
+		1A450CFA21CB2E5B00AF5866 /* boop.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = boop.wav; sourceTree = "<group>"; };
+		1A450CFC21CB2E7600AF5866 /* complete.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = complete.wav; sourceTree = "<group>"; };
 		1A76B94121C464D90048A4FB /* Slider.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Slider.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A76B94421C464D90048A4FB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		1A76B94621C464D90048A4FB /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -22,6 +32,10 @@
 		1A76B94B21C464DA0048A4FB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1A76B94E21C464DA0048A4FB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1A76B95021C464DA0048A4FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1A76B95621C7DB4F0048A4FB /* Live-better-Stock-pot-on--011.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "Live-better-Stock-pot-on--011.jpg"; path = "../../../../Pictures/Live-better-Stock-pot-on--011.jpg"; sourceTree = "<group>"; };
+		1A9F09F421DFDE62002591C1 /* GridViewConroller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridViewConroller.swift; sourceTree = "<group>"; };
+		1AE768A021DFDCF100329171 /* AIGridSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIGridSolver.swift; sourceTree = "<group>"; };
+		1AE768A221DFDDB900329171 /* SliderGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliderGrid.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,10 +70,17 @@
 			children = (
 				1A76B94421C464D90048A4FB /* AppDelegate.swift */,
 				1A76B94621C464D90048A4FB /* ViewController.swift */,
+				1A9F09F421DFDE62002591C1 /* GridViewConroller.swift */,
+				1AE768A221DFDDB900329171 /* SliderGrid.swift */,
+				1AE768A021DFDCF100329171 /* AIGridSolver.swift */,
 				1A76B94821C464D90048A4FB /* Main.storyboard */,
+				1A76B95621C7DB4F0048A4FB /* Live-better-Stock-pot-on--011.jpg */,
 				1A76B94B21C464DA0048A4FB /* Assets.xcassets */,
 				1A76B94D21C464DA0048A4FB /* LaunchScreen.storyboard */,
 				1A76B95021C464DA0048A4FB /* Info.plist */,
+				1A450CF821CB2C2E00AF5866 /* what-a-rush.mp3 */,
+				1A450CFA21CB2E5B00AF5866 /* boop.wav */,
+				1A450CFC21CB2E7600AF5866 /* complete.wav */,
 			);
 			path = Slider;
 			sourceTree = "<group>";
@@ -122,9 +143,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A450CFB21CB2E5B00AF5866 /* boop.wav in Resources */,
 				1A76B94F21C464DA0048A4FB /* LaunchScreen.storyboard in Resources */,
+				1A450CF921CB2C2E00AF5866 /* what-a-rush.mp3 in Resources */,
 				1A76B94C21C464DA0048A4FB /* Assets.xcassets in Resources */,
+				1A76B95721C7DB500048A4FB /* Live-better-Stock-pot-on--011.jpg in Resources */,
 				1A76B94A21C464D90048A4FB /* Main.storyboard in Resources */,
+				1A450CFD21CB2E7600AF5866 /* complete.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -135,7 +160,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1AE768A321DFDDB900329171 /* SliderGrid.swift in Sources */,
+				1A9F09F521DFDE62002591C1 /* GridViewConroller.swift in Sources */,
 				1A76B94721C464D90048A4FB /* ViewController.swift in Sources */,
+				1AE768A121DFDCF100329171 /* AIGridSolver.swift in Sources */,
 				1A76B94521C464D90048A4FB /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -283,7 +311,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = K9FE7UZ57A;
 				INFOPLIST_FILE = Slider/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -300,7 +330,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = K9FE7UZ57A;
 				INFOPLIST_FILE = Slider/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
