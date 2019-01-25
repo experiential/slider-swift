@@ -67,7 +67,7 @@ class GridViewController
             let dx = CGFloat(Double(space.x - from.x) * tileSize)
             let dy = CGFloat(Double(space.y - from.y) * tileSize)
             let tileView = gridViewMap[tile!.getIdentifier()]
-            UIView.animateKeyframes(withDuration: 0.1, delay: 0.0, options: UIView.KeyframeAnimationOptions(rawValue: 7), animations:
+            UIView.animateKeyframes(withDuration: 0.05, delay: 0.0, options: UIView.KeyframeAnimationOptions(rawValue: 7), animations:
                 {
                     tileView!.frame.origin.x+=dx
                     tileView!.frame.origin.y+=dy

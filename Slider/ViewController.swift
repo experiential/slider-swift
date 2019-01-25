@@ -32,7 +32,7 @@ class ViewController: UIViewController
         self.gridController = GridViewController(grid: grid, view:sliderGrid)
 
         // Scramble grid
-        grid.scramble(moves:1000)
+        grid.scramble(moves:10000)
 
         // Create second grid
         self.otherGrid = SliderGrid(originalGrid: self.grid)

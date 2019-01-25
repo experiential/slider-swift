@@ -16,6 +16,7 @@ class AIGridSolver
     var lastMove = 0
     var plan = AIMoveQueue()
     var tileFlags = [Tile: String]()
+    var gridIsComplete = false
     
     
     init(gridController:GridViewController)
@@ -23,12 +24,12 @@ class AIGridSolver
         self.gridController = gridController
         self.grid = gridController.grid
         
-        timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.makeAMove), userInfo: nil, repeats: true)
+        timer = Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(self.makeAMove), userInfo: nil, repeats: true)
     }
     
     @objc func makeAMove()
     {
-        if plan.isEmpty
+        if plan.isEmpty && !gridIsComplete
         {
             // No plan, so we need to make one
             print("Creating plan...")
@@ -40,110 +41,163 @@ class AIGridSolver
             }
             print("Next tile is...",nextTile!.getIdentifier() )
             
+            // Set flag on 'object tile' (the one to be moved) so that we don't move it while bring the space into position
+            tileFlags[nextTile!] = "object"
+            
             // Check direction we want the tile to go in
             let pos = nextTile!.position
             let dest = nextDest!
-            var spaceDest : GridPoint
-            if(pos.x < dest.x)
-            {
-                // Tile is to the left of its destination, so move space to the right of the tile
-                spaceDest = GridPoint(x:pos.x + 1, y:pos.y)
-            }
-            else if(pos.x > dest.x)
-            {
-                // Tile is to the right of its destination, so move space to the left of the tile
-                spaceDest = GridPoint(x:pos.x - 1, y:pos.y)
-            }
-            else
-            {
-                // Tile is below its destination, so move space to point above tile
-                spaceDest = GridPoint(x:pos.x, y:pos.y - 1)
-            }
-            print("Space destination: x:",spaceDest.x," y:",spaceDest.y)
+            var spaceDest = pos
             
-            // Check for end of row
-            var pos2:GridPoint? = nil
-            if nextTile!.homePosition.x == grid.gridSize.width - 2
+            let dx = dest.x - pos.x
+            let dy = dest.y - pos.y
+            
+            if(abs(dx) > abs(dy) || dy == 0) { spaceDest.x += Int(dx/abs(dx)) }
+            else { spaceDest.y += Int(dy/abs(dy)) }
+            
+            // Check space destination point for whether it has a complete tile
+            var tileAtDest = grid.getTileAt(point: spaceDest)
+            if let tileAtDest = tileAtDest
             {
-                print("Tile is penultimate in row")
-                if(nextTile!.position.x == nextTile!.homePosition.x + 1 && nextTile!.position.y == nextTile!.homePosition.y)
+                if tileFlags[tileAtDest] == "complete"
                 {
-                    print("Tile is in end of row position")
-                    let possibleEndTile = grid.points[nextTile!.homePosition.y + 1][nextTile!.homePosition.x + 1]
-                    if let possibleEndTile = possibleEndTile
-                    {
-                        print("Tile below end of row position exists")
-                        if possibleEndTile.position.x == possibleEndTile.homePosition.x && possibleEndTile.position.y == possibleEndTile.homePosition.y + 1
-                        {
-                            print("End of row move detected!")
-                            pos2 = possibleEndTile.position
-                        }
-                    }
+                    spaceDest = pos
+                    if(abs(dx) > abs(dy)) { spaceDest.y += Int(dy/abs(dy)) }
+                    else { spaceDest.x += Int(dx/abs(dx)) }
                 }
             }
+            
+            print("Space destination: x:",spaceDest.x," y:",spaceDest.y)
             
             if(grid.space != spaceDest)
             {
                 // Move space to destination point
                 var space = grid.space
-                while(space != spaceDest && plan.count < 50)
+                var previousSpace = space
+                while(space != spaceDest && plan.count < (grid.gridSize.width + grid.gridSize.height + 2))
                 {
-                    let dx = spaceDest.x - space.x
-                    let dy = spaceDest.y - space.y
-                    
-                    var newSpace = space
-                    if(abs(dx) > abs(dy))
+                    // Create list of possible moves
+                    var possiblePoints = [ "up":space, "down":space, "left":space, "right":space ]
+                    possiblePoints["up"]!.y -= 1
+                    possiblePoints["down"]!.y += 1
+                    possiblePoints["left"]!.x -= 1
+                    possiblePoints["right"]!.x += 1
+                    var availablePoints = possiblePoints
+                    // Remove moves that go outside the grid and that move flagged tiles (e.g. complete ones)
+                    availablePoints = availablePoints.filter
                     {
-                        newSpace.x += Int(dx/abs(dx))
-                    }
-                    else
-                    {
-                        newSpace.y += Int(dy/abs(dy))
-                    }
-                    
-                    //if newSpace == pos || (pos2 != nil && newSpace == pos2) // Will this move affect the tile we're trying to move?
-                    var tileToMove = grid.points[newSpace.y][newSpace.x]
-                    if tileToMove != nil && (tileFlags[tileToMove!] == "complete" || tileFlags[tileToMove!] == "tileToMove")
-                    {
-                        print("TILE FLAG ",tileFlags[tileToMove!]," for tile at ", newSpace.x, ":", newSpace.y)
-                        // Musn't move tile, so must go around
-                        if newSpace.x != space.x
+                        // First check whether the move is out of bounds
+                        if grid.gridPointIsOutOfBounds(point: $0.value) { return false }
+                        // Now check whether the move would be reversing the previous move, if there is one
+                        if previousSpace == $0.value { return false }
+                        var tile = grid.getTileAt(point: $0.value)
+                        if let tile = tile
                         {
-                            newSpace.x = space.x
-                            
-                            // Trying to move left/right, so check whether up or down is preferred (or space is at top/bottom of grid)
-                            if space.y != grid.gridSize.height - 1 && (dy >= 0 || space.y == 0)
-                            {
-                                newSpace.y = space.y + 1
-                            }
-                            else // Divert up
-                            {
-                                newSpace.y = space.y - 1
-                            }
+                            return tileFlags[tile] == nil
                         }
                         else
                         {
-                            newSpace.y = space.y
-                            
-                            // Trying to move up/down, so check whether left or right is preferred (or space is at far left/right of grid)
-                            if space.x != grid.gridSize.width - 1 && (dx >= 0 || space.x == 0) // >= because if dx is zero, we usually want to divert to the right
+                            return true; // Point contains the space, so that's ok to move through
+                        }
+                    }
+
+                    var tileToMove:Tile? = nil
+                    var newSpace = space
+                    while newSpace == space
+                    {
+                        // Determine which direction we're going in, and whether the x distance is greater than the y
+                        let dx = spaceDest.x - space.x
+                        let dy = spaceDest.y - space.y
+                        
+                        var direction = ""
+                        if abs(dx) > abs(dy)
+                        {
+                            if dx > 0 { direction = "right"; newSpace.x += 1 }
+                            else { direction = "left"; newSpace.x -= 1 } // dx must be < 0 (dx can't be 0)
+                            //newSpace.x += Int(dx/abs(dx))
+                        }
+                        else
+                        {
+                            if dy > 0 { direction = "down"; newSpace.y += 1 }
+                            else { direction = "up"; newSpace.y -= 1 } // dy must be < 0 (dy can't be 0)
+                            //newSpace.y += Int(dy/abs(dy))
+                        }
+
+                        if availablePoints[direction] == nil
+                        {
+                            // Either boundary was reached, or we must not move this tile, so must go around
+                            if abs(dx) > abs(dy)
                             {
-                                newSpace.x = space.x + 1
+                                newSpace = space
+                                
+                                // Trying to move left/right, so check whether up or down is preferred (or space is at top/bottom of grid)
+                                if (dy >= 0 || availablePoints["up"] == nil) && availablePoints["down"] != nil
+                                {
+                                    newSpace.y += 1
+                                }
+                                else if availablePoints["up"] != nil // Divert up
+                                {
+                                    newSpace.y -= 1
+                                }
+                                else // Only option is backwards
+                                {
+                                    newSpace.x -= Int(dx/abs(dx)) // Need bounds check here
+                                }
                             }
-                            else // Divert to left
+                            else
                             {
-                                newSpace.x = space.x - 1
+                                newSpace = space
+                                
+                                // Trying to move up/down, so check whether left or right is preferred (or space is at far left/right of grid)
+                                if (dx >= 0 || availablePoints["left"] == nil) && availablePoints["right"] != nil // >= because if dx is zero, we usually want to divert to the right
+                                {
+                                    newSpace.x += 1
+                                }
+                                else
+                                {
+                                    // We are (probably) caught in a corner here, so need to determine the correct way to try to go around, which means staying close to the object tile
+                                    var objectTileIsRight = false
+                                    if let rightTile = grid.getTileAt(point: possiblePoints["right"]!)
+                                    {
+                                        if tileFlags[rightTile] == "object"
+                                        {
+                                            objectTileIsRight = true
+                                        }
+                                    }
+                                    
+                                    if availablePoints["left"] != nil && !objectTileIsRight // Divert to left
+                                    {
+                                        newSpace.x -= 1
+                                    }
+                                    else
+                                    {
+                                        newSpace.y -= Int(dy/abs(dy)) // Need bounds check here
+                                    }
+                                }
                             }
                         }
                         
+                        tileToMove = grid.getTileAt(point: newSpace)
                     }
                     
+                    if tileToMove != nil && tileFlags[tileToMove!] != nil
+                    {
+                        print("PLAN: Ran out of possible moves!")
+                        
+                        // Must have run out of possible moves
+                        newSpace = availablePoints.values.first!
+                    }
+                    
+                    previousSpace = space
                     space = newSpace
                     plan.addToQueue(point: space)
                 }
                 
             }
             
+            // Unset 'object' flag on object tile
+            tileFlags[nextTile!] = nil
+
             // Move tile into space
             plan.addToQueue(point: pos)
         }
@@ -160,197 +214,414 @@ class AIGridSolver
         var nextDestination:GridPoint? = nil
         var nextTileHome:GridPoint? = nil // The home position of the tile we will want to move
         var nextTile:Tile? = nil
-        var x = 0
-        var y = 0 // Start from top left corner (for now)
-        while(nextDestination == nil)
+        var start = GridPoint(x:0, y:0)
+
+        // Determine from where to start checking for rows and columns
+        // If x coordinate of the original location of the space is less than the
+        // 'middle' on the x-axis, then start from the right, not the left (max x)
+        if Float(grid.originalSpace.x) < Float(grid.gridSize.width - 1) / 2.0
         {
-            if(grid.points[y][x] != nil)
+            start.x = grid.gridSize.width - 1
+        }
+        // Similarly for y
+        if Float(grid.originalSpace.y) < Float(grid.gridSize.height - 1) / 2.0
+        {
+            start.y = grid.gridSize.height - 1
+        }
+        
+        // Check columns and rows in order (in towards the final space position) until we
+        // find one that isn't complete
+        var columnX = start.x
+        var columnXDirection = (start.x > 0) ? -1 : 1
+        var columnsChecked:[Int] = []
+        var rowY = start.y
+        var rowYDirection = (start.y > 0) ? -1 : 1
+        var rowsChecked:[Int] = []
+        while(nextDestination == nil && (columnsChecked.count < grid.gridSize.height || rowsChecked.count < grid.gridSize.width))
+        {
+            // Decide whether to check row or column for completeness next
+            var mode = "row"
+            if grid.gridSize.height - columnsChecked.count > grid.gridSize.width - rowsChecked.count // Check whether more rows are left to complete, or more columns
             {
-                var thisTile = grid.points[y][x]!
-                if thisTile.position != thisTile.homePosition
-                {
-                    if x == (grid.gridSize.width - 2) // Second last tile in row
-                    {
-                        var tileToRight = grid.points[y][x + 1]
-                        if let tileToRight = tileToRight
-                        {
-                            if tileToRight.homePosition == GridPoint(x:x, y:y) // If tile to the right is (ultimately) meant to go here
-                            {
-                                // Then the tile to the right may be in the right place for now
-                                var tileToRightDown = grid.points[y + 1][x + 1]
-                                if let tileToRightDown = tileToRightDown
-                                {
-                                    if tileToRightDown.homePosition == GridPoint(x:x + 1, y:y)
-                                    {
-                                        // Both second last tile and last tile are in position for final move to complete row
-                                        print("PLAN: Last two tiles in position, move into place and complete row")
-                                        nextDestination = GridPoint(x:x, y:y)
-                                        nextTileHome = GridPoint(x:x, y:y)
-                                        tileFlags[tileToRight] = "complete"
-                                        tileFlags[tileToRightDown] = "complete"
-                                    }
-                                    else
-                                    {
-                                        // Last tile needs to be moved into position
-                                        print("PLAN: Move last row tile into end of row below")
-                                        nextDestination = GridPoint(x:x + 1, y:y + 1)
-                                        nextTileHome = GridPoint(x:x + 1, y:y)
-                                        
-                                        tileFlags[tileToRight] = "complete" // Set the flag for penultimate tile
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                // Tile to the right is not the penultimate row tile, so specify that penultimate row tile is to move to position to the right (in preparation for row completion move)
-                                print("PLAN: Move penultimate row tile to end of row")
-                                nextDestination = GridPoint(x:x + 1, y:y)
-                                nextTileHome = GridPoint(x:x, y:y)
-                            }
-                        }
-                        else
-                        {
-                            // The space is in the position to the right
-                            print("PLAN: Space is at end of row, move penultimate row tile to end of row")
-                            nextDestination = GridPoint(x:x + 1, y:y)
-                            nextTileHome = GridPoint(x:x, y:y)
-                        }
-                    }
-                    else if x == (grid.gridSize.width - 1) // Last tile in row
-                    {
-                        var tileBelow = grid.points[y + 1][x]
-                        if let tileBelow = tileBelow
-                        {
-                            if tileBelow.homePosition == GridPoint(x:x, y:y) // If tile below is (ultimately) meant to go here
-                            {
-                                // Last tiles need to be moved into position
-                                print("PLAN: Last two tiles in position, move final tile into end of row")
-                                nextDestination = GridPoint(x:x, y:y)
-                                nextTileHome = GridPoint(x:x, y:y)
-                                //tileFlags[thisTile] = "complete"
-                            }
-                            else
-                            {
-                                print("PLAN: Final tile not in position, move final tile into end of row below")
-                                nextDestination = GridPoint(x:x, y:y + 1)
-                                nextTileHome = GridPoint(x:x, y:y)
-                            }
-                        }
-                        else
-                        {
-                            print("PLAN: Space is at end of row below, move final row tile there instead")
-                            // The space is in the position below
-                            nextDestination = GridPoint(x:x, y:y + 1)
-                            nextTileHome = GridPoint(x:x, y:y)
-                        }
-                    }
-                    else
-                    {
-                        nextDestination = GridPoint(x:x, y:y)
-                        nextTileHome = GridPoint(x:x, y:y)
-                    }
-                }
+                mode = "column"
+            }
+
+            // Make a list of the locations in this row/column so we don't have to keep
+            // doing it again and again.
+            var line:[GridPoint] = []
+            var max = 0
+            var point = GridPoint(x:0, y:0)
+            if mode == "row"
+            {
+                max = grid.gridSize.width
+                point.y = rowY
+                print("PLAN: Checking ",mode," at y=",rowY)
             }
             else
             {
-                // This is the space
-                if x == (grid.gridSize.width - 2) // Second last tile in row?
+                max = grid.gridSize.height
+                point.x = columnX
+                print("PLAN: Checking ",mode," at x=",columnX)
+            }
+            for i in 0..<max
+            {
+                if mode == "row" { point.x = i }
+                else {point.y = i }
+                line.append(point)
+            }
+
+            // Check each tile in row/column for whether it's in its home position
+            var pointsNotComplete:[GridPoint] = []
+            for thisPoint in line
+            {
+                let thisTile = grid.getTileAt(point: thisPoint)
+                var tileInHomePosition = false
+                if let thisTile = thisTile
                 {
-                    var tileToRight = grid.points[y][x + 1]
-                    if let tileToRight = tileToRight
+                    if thisTile.position == thisTile.homePosition
                     {
-                        if tileToRight.homePosition == GridPoint(x:x, y:y) // If tile to the right is (ultimately) meant to go here
-                        {
-                            // Then the tile to the right may be in the right place for now
-                            var tileToRightDown = grid.points[y + 1][x + 1]
-                            if let tileToRightDown = tileToRightDown
-                            {
-                                if tileToRightDown.homePosition == GridPoint(x:x + 1, y:y)
-                                {
-                                    // Both second last tile and last tile are in position for final move to complete row
-                                    print("PLAN: Last two tiles in position, move into place and complete row")
-                                    nextDestination = GridPoint(x:x, y:y)
-                                    nextTileHome = GridPoint(x:x, y:y)
-                                    tileFlags[tileToRight] = nil
-                                    tileFlags[tileToRightDown] = nil
-                                }
-                                else
-                                {
-                                    // Last tile needs to be moved into position
-                                    print("PLAN: Move last row tile into end of row below")
-                                    nextDestination = GridPoint(x:x + 1, y:y + 1)
-                                    nextTileHome = GridPoint(x:x + 1, y:y)
-                                    
-                                    tileFlags[tileToRight] = "complete" // Set the flag for penultimate tile
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // Tile to the right is not the penultimate row tile, so specify that penultimate row tile is to move to position to the right (in preparation for row completion move)
-                            print("PLAN: Move penultimate row tile to end of row")
-                            nextDestination = GridPoint(x:x + 1, y:y)
-                            nextTileHome = GridPoint(x:x, y:y)
-                        }
-                    }
-                    else
-                    {
-                        // The space is in the position to the right
-                        print("PLAN: Space is at end of row, move penultimate row tile to end of row")
-                        nextDestination = GridPoint(x:x + 1, y:y)
-                        nextTileHome = GridPoint(x:x, y:y)
+                        tileInHomePosition = true
                     }
                 }
                 else
                 {
-                    nextDestination = GridPoint(x:x, y:y)
-                    nextTileHome = GridPoint(x:x, y:y)
+                    // This is the space, so check whether it's in the final space position
+                    if thisPoint == grid.originalSpace
+                    {
+                        tileInHomePosition = true
+                    }
+                }
+                
+                if !tileInHomePosition
+                {
+                    // Note this location
+                    pointsNotComplete.append(thisPoint)
+                    print("PLAN: Tile at ",thisPoint," is not in final position")
                 }
             }
             
-            if(nextDestination == nil)
+            // Line (row/column) has now been checked, so see whether there are any tiles missing
+            // in this line
+            if pointsNotComplete.count == 0
             {
-                // Tile is in home position so mark the tile  as 'not to be moved' and increment to next
-                if grid.points[y][x] != nil
+                // All tiles complete, so mark these tiles as 'not to be touched' and move on
+                print("PLAN: All tiles in final position, marking as complete")
+                for point in line
                 {
-                    var thisTile:Tile = grid.points[y][x]!
-                    if tileFlags[thisTile] == nil && thisTile.position == thisTile.homePosition
+                    let thisTile = grid.getTileAt(point: point)
+                    if thisTile != nil
                     {
-                        tileFlags[thisTile] = "complete"
+                        tileFlags[thisTile!] = "complete"
                     }
                 }
-                x += 1
-                if(x >= grid.gridSize.width)
+                
+                // Add row/column to 'rows/columns checked' list, and move on to next row/column
+                // TODO: add code here(? or when initally check the new row/column?) to search from other side of grid if space originally in/near the new row/column
+                if mode == "row"
                 {
-                    x = 0
-                    y += 1
+                    rowsChecked.append(rowY)
+                    rowY += rowYDirection
+                }
+                else
+                {
+                    columnsChecked.append(columnX)
+                    columnX += columnXDirection
+                }
+                
+                continue
+            }
+            else
+            {
+                // Check whether we're down to the last one or two tiles not in position and whether they're adjacent (if there are two), or if there is only one, that the space is in the last place, and the last tile to go in the line is next to the space... i.e. we are carrying out the 'end of row move'
+                var endOfLine = false
+                if pointsNotComplete.count == 1 && grid.getTileAt(point: pointsNotComplete[0]) == nil
+                {
+                    // Check whether the last remaining tile is next to the space
+                    var lastTile = grid.findTileWithHomePosition(point: pointsNotComplete[0])
+                    if let lastTile = lastTile
+                    {
+                        if lastTile.position.isAdjacentTo(point: pointsNotComplete[0])
+                        {
+                            endOfLine = true
+                        }
+                    }
+                }
+                else if pointsNotComplete.count == 2 && pointsNotComplete[0].isAdjacentTo(point:pointsNotComplete[1])
+                {
+                    // Last two points to fill are adjacent, so either we start, or continue, the 'end of row move'
+                    endOfLine = true
+                }
+                
+                if pointsNotComplete.count > 2
+                {
+                    print("PLAN: More than two tiles out of position")
+
+                    // Mark first incomplete location and tile that goes there as next destination and the tile to move there
+                    nextDestination = pointsNotComplete[0]
+                    nextTileHome = pointsNotComplete[0]
+
+                    // Mark complete tiles as complete
+                    for point in line
+                    {
+                        let tile = grid.getTileAt(point: point)
+                        if tile != nil && tile!.position == tile!.homePosition
+                        {
+                            tileFlags[tile!] = "complete"
+                        }
+                        else
+                        {
+                            break
+                        }
+                    }
+                }
+                else if pointsNotComplete.count <= 2 && !endOfLine
+                {
+                    // Only two tiles out of position but they're not adjacent
+                    if pointsNotComplete.count == 2 { print("PLAN: Only two tiles out of position but they're not adjacent") }
+                    else { print("PLAN: Only one tile out of position but can't complete the line") }
+
+                    // Mark first incomplete location and tile that goes there as next destination and the tile to move there
+                    nextDestination = pointsNotComplete[0]
+                    
+                    // Find where the next destination is in the list and identify a tile next to it
+                    var completedPointToUnlock:GridPoint? = nil
+                    var endOfLine = false
+                    if let indexAndPoint = line.enumerated().first(where: {$0.element == nextDestination})
+                    {
+                        // If it's the last tile in the line, 'unlock' (allow to be moved) the tile before it, otherwise unlock the tile after it.
+                        if indexAndPoint.offset == line.count - 1
+                        {
+                            completedPointToUnlock = line[indexAndPoint.offset - 1]
+                            endOfLine = true
+                        }
+                        else
+                        {
+                            completedPointToUnlock = line[indexAndPoint.offset + 1]
+                        }
+                        print("PLAN: Choosing adjacent tile at ",completedPointToUnlock,"to unlock")
+                    }
+                    
+                    // If only one point in the line is not complete (and we've checked that we're not in position for the 'end of line manoeuvre') then a tile that's in position, and that's next to the incomplete point, needs to be moved to the incomplete point for the end of line move. Otherwise two points are incomplete, so we just want to move the tile for point 0 to point 1 (to prepare for the end of line move)
+                    if pointsNotComplete.count == 1
+                    {
+                        if endOfLine
+                        {
+                            nextTileHome = completedPointToUnlock
+                        }
+                        else
+                        {
+                            nextDestination = completedPointToUnlock
+                            nextTileHome = pointsNotComplete[0]
+                        }
+                    }
+                    else
+                    {
+                        nextTileHome = pointsNotComplete[0]
+                    }
+
+                    // Mark complete tiles as complete, except for one next to the next destination (unset that one as complete)
+                    for point in line
+                    {
+                        let tile = grid.getTileAt(point: point)
+                        if tile != nil
+                        {
+                            if tile!.position == tile!.homePosition && point != completedPointToUnlock!
+                            {
+                                tileFlags[tile!] = "complete"
+                            }
+                            else if point == completedPointToUnlock!
+                            {
+                                tileFlags[tile!] = nil
+                            }
+                        }
+                    }
+                    
+                }
+                else
+                {
+                    // Start or continue 'end of line' manoeuvre
+                    print("PLAN: Start or continue 'end of line' manoeuvre")
+                    
+                    if pointsNotComplete.count == 2
+                    {
+                        var tile0 = grid.getTileAt(point: pointsNotComplete[0])
+                        var tile1 = grid.getTileAt(point: pointsNotComplete[1])
+                        
+                        if tile1 == nil || tile1!.homePosition != pointsNotComplete[0]
+                        {
+                            print("PLAN: Get first tile into second spot")
+
+                            // Get tile for point 0 into point 1
+                            nextDestination = pointsNotComplete[1]
+                            nextTileHome = pointsNotComplete[0]
+                            
+                            // Mark tiles not in point 0 or 1 as complete
+                            for point in line
+                            {
+                                if point != pointsNotComplete[0] && point != pointsNotComplete[1]
+                                {
+                                    let thisTile = grid.getTileAt(point: point)
+                                    if thisTile != nil
+                                    {
+                                        tileFlags[thisTile!] = "complete"
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Tile for point 0 is in position in point 1, but now we need to check for the 'entangled' position where the tile for point 1 is (or will be shortly) in point 0, which makes it impossible to get the last two tiles into the line in the correct order.
+                            var entangled = false
+                            if tile0 != nil && tile0!.homePosition == pointsNotComplete[1] { entangled = true }
+                            else if tile0 == nil
+                            {
+                                let finalTile = grid.findTileWithHomePosition(point: pointsNotComplete[1])
+                                if let finalTile = finalTile
+                                {
+                                    if finalTile.position.isAdjacentTo(point: pointsNotComplete[0])
+                                    {
+                                        entangled = true
+                                    }
+                                }
+                            }
+
+                            if entangled
+                            {
+                                print("PLAN: Entangled!!!!!!!! Get final tile out of the way")
+
+                                var outOfTheWayPoint = pointsNotComplete[0]
+                                if mode == "row" { outOfTheWayPoint.y += 2} // below the row
+                                else { outOfTheWayPoint.x += 2 } // to the right of the column
+                                
+                                nextDestination = outOfTheWayPoint
+                                nextTileHome = pointsNotComplete[1]
+                                
+                                // Mark tiles not in point 0 or 1 as complete
+                                for point in line
+                                {
+                                    let thisTile = grid.getTileAt(point: point)
+                                    if thisTile != nil
+                                    {
+                                        if point != pointsNotComplete[0] && point != pointsNotComplete[1]
+                                        {
+                                            tileFlags[thisTile!] = "complete"
+                                        }
+                                        else
+                                        {
+                                            tileFlags[thisTile!] = nil
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Tile for point 0 is in position in point 1, so get tile for point 1 next to point 1, closer to the final space position
+                                // TODO: This is a fudge, we just go down or right, rather than towards the 'final space position'... fix later!
+                                var adjacentPoint = pointsNotComplete[1]
+                                if mode == "row" { adjacentPoint.y += 1} // below the row
+                                else { adjacentPoint.x += 1 } // to the right of the column
+                                
+                                var adjacentTile = grid.getTileAt(point: adjacentPoint)
+                                if adjacentTile == nil || adjacentTile!.homePosition != pointsNotComplete[1]
+                                {
+                                    print("PLAN: Get second tile into 'adjacent' spot")
+
+                                    // Adjacent point doesn't contain the tile for point 1, so get it there
+                                    nextDestination = adjacentPoint
+                                    nextTileHome = pointsNotComplete[1]
+                                    
+                                    // Mark tiles not in point 0 or 1 as complete
+                                    for point in line
+                                    {
+                                        let thisTile = grid.getTileAt(point: point)
+                                        if thisTile != nil
+                                        {
+                                            if point != pointsNotComplete[0] && point != pointsNotComplete[1]
+                                            {
+                                                tileFlags[thisTile!] = "complete"
+                                            }
+                                            else if point == pointsNotComplete[1]
+                                            {
+                                                tileFlags[thisTile!] = "hold"
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    print("PLAN: Both tiles in position, so get first tile into home spot")
+
+                                    // Both tiles are in position, so move first tile into point 0
+                                    nextDestination = pointsNotComplete[0]
+                                    nextTileHome = pointsNotComplete[0]
+                                    
+                                    // Mark tiles not in point 0 or 1 as complete, the two 'end' tiles as 'hold'
+                                    tileFlags[adjacentTile!] = "hold"
+                                    for point in line
+                                    {
+                                        let thisTile = grid.getTileAt(point: point)
+                                        if thisTile != nil
+                                        {
+                                            if point != pointsNotComplete[0] && point != pointsNotComplete[1]
+                                            {
+                                                tileFlags[thisTile!] = "complete"
+                                            }
+                                            else if point == pointsNotComplete[1]
+                                            {
+                                                tileFlags[thisTile!] = "hold"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else // Only one point not complete in this line
+                    {
+                        print("PLAN: Final move! Get final tile into home spot")
+
+                        // Final move for end of line! Move final tile into space
+                        nextDestination = pointsNotComplete[0]
+                        nextTileHome = pointsNotComplete[0]
+
+                        // Mark tiles not in point 0 as complete, the 'end' tile as 'hold'
+                        let finalTile = grid.findTileWithHomePosition(point: pointsNotComplete[0])
+                        if let finalTile = finalTile
+                        {
+                            tileFlags[finalTile] = "hold"
+                        }
+
+                        for point in line
+                        {
+                            let thisTile = grid.getTileAt(point: point)
+                            if thisTile != nil
+                            {
+                                if point != pointsNotComplete[0]
+                                {
+                                    tileFlags[thisTile!] = "complete"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
         
         if nextDestination == nil || nextTileHome == nil
         {
+            gridIsComplete = true
             return (nil, nil); // Grid is complete
         }
         
         // Now find the tile that should go in that space
-        for i in 0..<grid.gridSize.height
+        let tileToMove = grid.findTileWithHomePosition(point: nextTileHome!)
+        if let tileToMove = tileToMove
         {
-            for j in 0..<grid.gridSize.width
-            {
-                if grid.points[i][j] != nil
-                {
-                    var thisTile = grid.points[i][j]!
-                    if thisTile.homePosition == nextTileHome!
-                    {
-                        tileFlags[thisTile] = "tileToMove"
-                        return (nextDestination, thisTile)
-                    }
-                }
-            }
+            return (nextDestination, tileToMove)
         }
         
         // Couldn't find tile for destination, so grid must be complete
+        gridIsComplete = true
         return (nil, nil);
     }
     
@@ -372,7 +643,7 @@ struct AIMovePlan
 struct AIMoveQueue
 {
     fileprivate var head: Node?
-    private var tail: Node?
+    fileprivate var tail: Node?
     private var length = 0
     
     public mutating func addToQueue(point: GridPoint)
@@ -414,6 +685,11 @@ struct AIMoveQueue
         length -= 1
         
         return element.value
+    }
+    
+    public var last: GridPoint?
+    {
+        return tail?.value
     }
     
     public var count: Int

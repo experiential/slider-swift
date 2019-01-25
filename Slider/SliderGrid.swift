@@ -14,12 +14,14 @@ class SliderGrid
     var points: [[Tile?]]
     var space: GridPoint
     var tilesInHomePosition = 0
+    let originalSpace: GridPoint
     
     init(size:GridSize)
     {
         self.gridSize = size
         let space = GridPoint(x: size.width - 1, y: size.height - 1)
         self.space = space
+        self.originalSpace = space
         self.points = (0..<size.height).map
             {
                 y in (0..<size.width).map
@@ -41,6 +43,7 @@ class SliderGrid
     {
         self.gridSize = originalGrid.gridSize // This will create a copy of 'gridSize'
         self.space = originalGrid.space // This will create a copy of 'space'
+        self.originalSpace = originalGrid.originalSpace // This will create a copy of 'space'
         self.tilesInHomePosition = originalGrid.tilesInHomePosition
         self.points = (0..<originalGrid.gridSize.height).map
             {
@@ -54,6 +57,39 @@ class SliderGrid
                         return Tile(originalTile: originalGrid.points[y][x]!)
                 }
         }
+    }
+    
+    func getTileAt(point:GridPoint) -> Tile?
+    {
+        if gridPointIsOutOfBounds(point: point) { return nil }
+
+        return points[point.y][point.x]
+    }
+    
+    func findTileWithHomePosition(point:GridPoint) -> Tile?
+    {
+        if gridPointIsOutOfBounds(point: point) { return nil }
+        
+        for i in 0..<gridSize.height
+        {
+            for j in 0..<gridSize.width
+            {
+                if let thisTile = points[i][j]
+                {
+                    if thisTile.homePosition == point
+                    {
+                        return thisTile
+                    }
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+    func gridPointIsOutOfBounds(point:GridPoint) -> Bool
+    {
+        return point.x > gridSize.width - 1 || point.x < 0 || point.y > gridSize.height - 1 || point.y < 0
     }
     
     func moveTile(from:GridPoint) -> Bool
@@ -174,6 +210,11 @@ class Tile: NSObject, NSCopying
     {
         return Tile(position:self.position, homePosition:self.homePosition)
     }
+    
+    func isAdjacentTo(tile:Tile) -> Bool
+    {
+        return self.position.isAdjacentTo(point: tile.position)
+    }
 }
 
 public struct GridPoint: Equatable
@@ -185,6 +226,18 @@ public struct GridPoint: Equatable
     {
         return lhs.x == rhs.x && lhs.y == rhs.y
     }
+
+    func isAdjacentTo(point:GridPoint) -> Bool
+    {
+        return self.gridDistanceTo(point:point) == 1
+    }
+
+    func gridDistanceTo(point:GridPoint) -> Int
+    {
+        return abs(self.x - point.x) + abs(self.y - point.y)
+    }
+    
+    public var description: String { return "GridPoint:\(x),\(y)" }
 }
 
 public struct GridSize
