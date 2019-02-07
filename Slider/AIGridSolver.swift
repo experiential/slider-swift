@@ -12,6 +12,7 @@ class AIGridSolver
 {
     var gridController:GridViewController
     var grid:SliderGrid
+    var aiLevel = 1
     var timer:Timer?
     var lastMove = 0
     var plan = AIMoveQueue()
@@ -19,12 +20,19 @@ class AIGridSolver
     var gridIsComplete = false
     
     
-    init(gridController:GridViewController)
+    init(gridController:GridViewController, level: Int)
     {
         self.gridController = gridController
         self.grid = gridController.grid
         
-        timer = Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(self.makeAMove), userInfo: nil, repeats: true)
+        self.aiLevel = level
+        
+        timer = Timer.scheduledTimer(timeInterval: 10.0/Double(aiLevel), target: self, selector: #selector(self.makeAMove), userInfo: nil, repeats: true)
+    }
+    
+    func end()
+    {
+        timer!.invalidate()
     }
     
     @objc func makeAMove()
@@ -40,7 +48,8 @@ class AIGridSolver
                 return
             }
             print("Next tile is...",nextTile!.getIdentifier() )
-            
+            print("Destination is...",nextDest! )
+
             // Set flag on 'object tile' (the one to be moved) so that we don't move it while bring the space into position
             tileFlags[nextTile!] = "object"
             
@@ -61,8 +70,9 @@ class AIGridSolver
             {
                 if tileFlags[tileAtDest] == "complete"
                 {
+                    // TODO: This needs fixing!
                     spaceDest = pos
-                    if(abs(dx) > abs(dy)) { spaceDest.y += Int(dy/abs(dy)) }
+                    if(abs(dx) > abs(dy) || dx == 0) { spaceDest.y += Int(dy/abs(dy)) }
                     else { spaceDest.x += Int(dx/abs(dx)) }
                 }
             }
@@ -101,91 +111,104 @@ class AIGridSolver
                         }
                     }
 
-                    var tileToMove:Tile? = nil
                     var newSpace = space
-                    while newSpace == space
+
+                    // Determine which direction we're going in, and whether the x distance is greater than the y
+                    let dx = spaceDest.x - space.x
+                    let dy = spaceDest.y - space.y
+                    
+                    var direction = ""
+                    if abs(dx) > abs(dy)
                     {
-                        // Determine which direction we're going in, and whether the x distance is greater than the y
-                        let dx = spaceDest.x - space.x
-                        let dy = spaceDest.y - space.y
-                        
-                        var direction = ""
+                        if dx > 0 { direction = "right"; newSpace.x += 1 }
+                        else { direction = "left"; newSpace.x -= 1 } // dx must be < 0 (dx can't be 0)
+                        //newSpace.x += Int(dx/abs(dx))
+                    }
+                    else
+                    {
+                        if dy > 0 { direction = "down"; newSpace.y += 1 }
+                        else { direction = "up"; newSpace.y -= 1 } // dy must be < 0 (dy can't be 0)
+                        //newSpace.y += Int(dy/abs(dy))
+                    }
+
+                    if availablePoints[direction] == nil
+                    {
+                        // Either boundary was reached, or we must not move this tile, so must go around
                         if abs(dx) > abs(dy)
                         {
-                            if dx > 0 { direction = "right"; newSpace.x += 1 }
-                            else { direction = "left"; newSpace.x -= 1 } // dx must be < 0 (dx can't be 0)
-                            //newSpace.x += Int(dx/abs(dx))
+                            newSpace = space
+                            
+                            // Trying to move left/right, so check whether up or down is preferred (or space is at top/bottom of grid)
+                            if (dy >= 0 || availablePoints["up"] == nil) && availablePoints["down"] != nil
+                            {
+                                newSpace.y += 1
+                            }
+                            else if availablePoints["up"] != nil // Divert up
+                            {
+                                newSpace.y -= 1
+                            }
+                            else // Only option is backwards
+                            {
+                                newSpace.x -= Int(dx/abs(dx)) // Need bounds check here
+                            }
                         }
                         else
                         {
-                            if dy > 0 { direction = "down"; newSpace.y += 1 }
-                            else { direction = "up"; newSpace.y -= 1 } // dy must be < 0 (dy can't be 0)
-                            //newSpace.y += Int(dy/abs(dy))
-                        }
-
-                        if availablePoints[direction] == nil
-                        {
-                            // Either boundary was reached, or we must not move this tile, so must go around
-                            if abs(dx) > abs(dy)
+                            newSpace = space
+                            
+                            // Trying to move up/down, so check whether left or right is preferred (or space is at far left/right of grid)
+                            if (dx >= 0 || availablePoints["left"] == nil) && availablePoints["right"] != nil // >= because if dx is zero, we usually want to divert to the right
                             {
-                                newSpace = space
-                                
-                                // Trying to move left/right, so check whether up or down is preferred (or space is at top/bottom of grid)
-                                if (dy >= 0 || availablePoints["up"] == nil) && availablePoints["down"] != nil
-                                {
-                                    newSpace.y += 1
-                                }
-                                else if availablePoints["up"] != nil // Divert up
-                                {
-                                    newSpace.y -= 1
-                                }
-                                else // Only option is backwards
-                                {
-                                    newSpace.x -= Int(dx/abs(dx)) // Need bounds check here
-                                }
+                                newSpace.x += 1
                             }
                             else
                             {
-                                newSpace = space
-                                
-                                // Trying to move up/down, so check whether left or right is preferred (or space is at far left/right of grid)
-                                if (dx >= 0 || availablePoints["left"] == nil) && availablePoints["right"] != nil // >= because if dx is zero, we usually want to divert to the right
+                                // We are (probably) caught in a corner here, so need to determine the correct way to try to go around, which means staying close to the object tile
+                                var objectTileIsRight = false
+                                if let rightTile = grid.getTileAt(point: possiblePoints["right"]!)
                                 {
-                                    newSpace.x += 1
+                                    if tileFlags[rightTile] == "object"
+                                    {
+                                        objectTileIsRight = true
+                                    }
+                                }
+                                
+                                if availablePoints["left"] != nil && !objectTileIsRight // Divert to left
+                                {
+                                    newSpace.x -= 1
                                 }
                                 else
                                 {
-                                    // We are (probably) caught in a corner here, so need to determine the correct way to try to go around, which means staying close to the object tile
-                                    var objectTileIsRight = false
-                                    if let rightTile = grid.getTileAt(point: possiblePoints["right"]!)
-                                    {
-                                        if tileFlags[rightTile] == "object"
-                                        {
-                                            objectTileIsRight = true
-                                        }
-                                    }
-                                    
-                                    if availablePoints["left"] != nil && !objectTileIsRight // Divert to left
-                                    {
-                                        newSpace.x -= 1
-                                    }
-                                    else
-                                    {
-                                        newSpace.y -= Int(dy/abs(dy)) // Need bounds check here
-                                    }
+                                    newSpace.y -= Int(dy/abs(dy)) // Need bounds check here
                                 }
                             }
                         }
-                        
-                        tileToMove = grid.getTileAt(point: newSpace)
                     }
                     
-                    if tileToMove != nil && tileFlags[tileToMove!] != nil
+                    if newSpace == space || grid.gridPointIsOutOfBounds(point: newSpace)
                     {
-                        print("PLAN: Ran out of possible moves!")
+                        print("PLAN: Ran out of possible moves! Perfoming random move")
                         
-                        // Must have run out of possible moves
-                        newSpace = availablePoints.values.first!
+                        // Must have run out of possible moves... something has gone badly wrong!
+                        // Rather than stopping completely, we can make a random move.
+                        newSpace = space
+                        while newSpace == space
+                        {
+                            let thisMove = Int.random(in: 0...3) // There are four possible moves
+                            var possibleMovePoint = space
+                            
+                            // Determine changes in x and y according to move type
+                            if thisMove == 0 { possibleMovePoint.y -= 1 }
+                            if thisMove == 1 { possibleMovePoint.x += 1 }
+                            if thisMove == 2 { possibleMovePoint.x -= 1 }
+                            if thisMove == 3 { possibleMovePoint.y += 1 }
+                            
+                            if !grid.gridPointIsOutOfBounds(point: possibleMovePoint)
+                            {
+                                // Chosen move is not out of bounds, so add to the plan
+                                newSpace = possibleMovePoint
+                            }
+                        }
                     }
                     
                     previousSpace = space
@@ -215,11 +238,14 @@ class AIGridSolver
         var nextTileHome:GridPoint? = nil // The home position of the tile we will want to move
         var nextTile:Tile? = nil
         var start = GridPoint(x:0, y:0)
+        
+        // Clear locked tiles
+        tileFlags.removeAll()
 
         // Determine from where to start checking for rows and columns
         // If x coordinate of the original location of the space is less than the
         // 'middle' on the x-axis, then start from the right, not the left (max x)
-        if Float(grid.originalSpace.x) < Float(grid.gridSize.width - 1) / 2.0
+        /*if Float(grid.originalSpace.x) < Float(grid.gridSize.width - 1) / 2.0
         {
             start.x = grid.gridSize.width - 1
         }
@@ -227,7 +253,7 @@ class AIGridSolver
         if Float(grid.originalSpace.y) < Float(grid.gridSize.height - 1) / 2.0
         {
             start.y = grid.gridSize.height - 1
-        }
+        }*/
         
         // Check columns and rows in order (in towards the final space position) until we
         // find one that isn't complete
@@ -241,11 +267,45 @@ class AIGridSolver
         {
             // Decide whether to check row or column for completeness next
             var mode = "row"
-            if grid.gridSize.height - columnsChecked.count > grid.gridSize.width - rowsChecked.count // Check whether more rows are left to complete, or more columns
+            if grid.gridSize.width - columnsChecked.count > grid.gridSize.height - rowsChecked.count // Check whether more rows are left to complete, or more columns
             {
                 mode = "column"
             }
 
+            // Check that the row/column we're examining doesn't contain the 'final space' position
+            if (mode == "row" && rowY == grid.originalSpace.y) || (mode == "column" && columnX == grid.originalSpace.x)
+            {
+                if mode == "row"
+                {
+                    // Start checking from the opposite side
+                    if rowYDirection > 0
+                    {
+                        rowY = grid.gridSize.height - 1
+                        rowYDirection = -1
+                    }
+                    else
+                    {
+                        rowY = 0
+                        rowYDirection = 1
+                    }
+                }
+                else
+                {
+                    // Start checking from the opposite side
+                    if columnXDirection > 0
+                    {
+                        columnX = grid.gridSize.width - 1
+                        columnXDirection = -1
+                    }
+                    else
+                    {
+                        columnX = 0
+                        columnXDirection = 1
+                    }
+                }
+                continue
+            }
+            
             // Make a list of the locations in this row/column so we don't have to keep
             // doing it again and again.
             var line:[GridPoint] = []
@@ -389,6 +449,7 @@ class AIGridSolver
                     if let indexAndPoint = line.enumerated().first(where: {$0.element == nextDestination})
                     {
                         // If it's the last tile in the line, 'unlock' (allow to be moved) the tile before it, otherwise unlock the tile after it.
+                        //if indexAndPoint.offset > ( mode == "row"  ? grid.originalSpace.x : grid.originalSpace.y )
                         if indexAndPoint.offset == line.count - 1
                         {
                             completedPointToUnlock = line[indexAndPoint.offset - 1]
@@ -397,6 +458,16 @@ class AIGridSolver
                         else
                         {
                             completedPointToUnlock = line[indexAndPoint.offset + 1]
+                        }
+                        
+                        // Now check whether that is a locked tile (i.e. part of an already complete row/column)
+                        if let completedTileToUnlock = grid.getTileAt(point: completedPointToUnlock!)
+                        {
+                            if tileFlags[completedTileToUnlock] == "complete" && indexAndPoint.offset > 0
+                            {
+                                completedPointToUnlock = line[indexAndPoint.offset - 1]
+                                endOfLine = true
+                            }
                         }
                         print("PLAN: Choosing adjacent tile at ",completedPointToUnlock,"to unlock")
                     }
@@ -490,9 +561,19 @@ class AIGridSolver
                                 print("PLAN: Entangled!!!!!!!! Get final tile out of the way")
 
                                 var outOfTheWayPoint = pointsNotComplete[0]
-                                if mode == "row" { outOfTheWayPoint.y += 2} // below the row
-                                else { outOfTheWayPoint.x += 2 } // to the right of the column
-                                
+                                /*if mode == "row" { outOfTheWayPoint.y += 2} // below the row
+                                else { outOfTheWayPoint.x += 2 } // to the right of the column*/
+                                if mode == "row"
+                                {
+                                    if pointsNotComplete[0].y > grid.originalSpace.y { outOfTheWayPoint.y -= 2 } // Row is at the bottom, so go up
+                                    else { outOfTheWayPoint.y += 2 } // Row is at the top, so go down
+                                }
+                                else
+                                {
+                                    if pointsNotComplete[0].x > grid.originalSpace.x { outOfTheWayPoint.x -= 2 } // Column is on right side, so go to the left
+                                    else { outOfTheWayPoint.x += 2 } // Column is on left side, so go to the right of the column
+                                }
+
                                 nextDestination = outOfTheWayPoint
                                 nextTileHome = pointsNotComplete[1]
                                 
@@ -518,8 +599,16 @@ class AIGridSolver
                                 // Tile for point 0 is in position in point 1, so get tile for point 1 next to point 1, closer to the final space position
                                 // TODO: This is a fudge, we just go down or right, rather than towards the 'final space position'... fix later!
                                 var adjacentPoint = pointsNotComplete[1]
-                                if mode == "row" { adjacentPoint.y += 1} // below the row
-                                else { adjacentPoint.x += 1 } // to the right of the column
+                                if mode == "row"
+                                {
+                                    if pointsNotComplete[1].y > grid.originalSpace.y { adjacentPoint.y -= 1 } // Row is at the bottom, so go up
+                                    else { adjacentPoint.y += 1 } // Row is at the top, so go down
+                                }
+                                else
+                                {
+                                    if pointsNotComplete[1].x > grid.originalSpace.x { adjacentPoint.x -= 1 } // Column is on right side, so go to the left
+                                    else { adjacentPoint.x += 1 } // Column is on left side, so go to the right of the column
+                                }
                                 
                                 var adjacentTile = grid.getTileAt(point: adjacentPoint)
                                 if adjacentTile == nil || adjacentTile!.homePosition != pointsNotComplete[1]

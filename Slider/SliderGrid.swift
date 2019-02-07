@@ -16,23 +16,22 @@ class SliderGrid
     var tilesInHomePosition = 0
     let originalSpace: GridPoint
     
-    init(size:GridSize)
+    init(size:GridSize, space:GridPoint)
     {
         self.gridSize = size
-        let space = GridPoint(x: size.width - 1, y: size.height - 1)
         self.space = space
         self.originalSpace = space
         self.points = (0..<size.height).map
+        {
+            y in (0..<size.width).map
             {
-                y in (0..<size.width).map
-                    {
-                        x in
-                        if(x == space.x && y == space.y)
-                        {
-                            return nil
-                        }
-                        return Tile(position: GridPoint(x: x,y: y), homePosition: GridPoint(x: x,y: y))
+                x in
+                if(x == space.x && y == space.y)
+                {
+                    return nil
                 }
+                return Tile(position: GridPoint(x: x,y: y), homePosition: GridPoint(x: x,y: y))
+            }
         }
         
         // All tiles should be in home (grid-complete) position, so set count to maximum
@@ -46,16 +45,16 @@ class SliderGrid
         self.originalSpace = originalGrid.originalSpace // This will create a copy of 'space'
         self.tilesInHomePosition = originalGrid.tilesInHomePosition
         self.points = (0..<originalGrid.gridSize.height).map
+        {
+            y in (0..<originalGrid.gridSize.width).map
             {
-                y in (0..<originalGrid.gridSize.width).map
-                    {
-                        x in
-                        if(x == originalGrid.space.x && y == originalGrid.space.y)
-                        {
-                            return nil
-                        }
-                        return Tile(originalTile: originalGrid.points[y][x]!)
+                x in
+                if(x == originalGrid.space.x && y == originalGrid.space.y)
+                {
+                    return nil
                 }
+                return Tile(originalTile: originalGrid.points[y][x]!)
+            }
         }
     }
     
@@ -104,7 +103,8 @@ class SliderGrid
             if(points[space.y][space.x] != nil) { return false }
             
             // Check 'from' point is adjacent to space
-            if(abs(from.x - space.x) + abs(from.y - space.y) != 1) { return false }
+            if(!from.isAdjacentTo(point: space)) { return false }
+            //if(abs(from.x - space.x) + abs(from.y - space.y) != 1) { return false }
             
             // We're definitely going to move the tile, so...
             // Check whether we're about to move it out of its home position, and reduce the counter if so
@@ -162,26 +162,6 @@ class SliderGrid
         }
     }
     
-    /*func copy(with zone: NSZone? = nil) -> Any
-     {
-     var newGrid = SliderGrid(size:self.gridSize)
-     
-     newGrid.space = self.space
-     newGrid.points = (0..<gridSize.height).map
-     {
-     y in (0..<gridSize.width).map
-     {
-     x in
-     if(x == space.x && y == space.y)
-     {
-     return nil
-     }
-     return self.points[y][x]!.copy()
-     }
-     }
-     
-     return newGrid
-     }*/
 }
 
 class Tile: NSObject, NSCopying

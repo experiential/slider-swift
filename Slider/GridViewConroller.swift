@@ -14,8 +14,8 @@ class GridViewController
 {
     var grid:SliderGrid
     var view:UIView
-    let tileSize = 60.0
-    var gridViewMap = [String:UIView]()
+    var tileSize = CGSize(width: 60.0, height: 60.0)
+    var gridViewMap = [String:UIImageView]()
     var player: AVAudioPlayer?
     
     init(grid:SliderGrid, view:UIView)
@@ -26,6 +26,15 @@ class GridViewController
     
     func createView()
     {
+        // First remove any previously existing tiles from the grid view
+        for thisView in view.subviews
+        {
+            thisView.removeFromSuperview()
+        }
+        
+        tileSize.width = view.frame.size.width / CGFloat(grid.gridSize.width)
+        tileSize.height = view.frame.size.width / CGFloat(grid.gridSize.height)
+        
         for i in 0..<grid.gridSize.height
         {
             for j in 0..<grid.gridSize.width
@@ -33,9 +42,9 @@ class GridViewController
                 if(grid.points[i][j] != nil)
                 {
                     // Create new View
-                    let tileView = UIImageView(frame: CGRect(origin:CGPoint(x: Double(j)*tileSize, y: Double(i)*tileSize), size:CGSize(width: tileSize, height: tileSize)))
+                    let tileView = UIImageView(frame: CGRect(origin:CGPoint(x: CGFloat(j)*tileSize.width, y: CGFloat(i)*tileSize.height), size:tileSize))
                     
-                    tileView.backgroundColor = UIColor(displayP3Red: 0.1, green: 0.9, blue: 0.1, alpha: 1.0)
+                    tileView.backgroundColor = UIColor.yellow
                     
                     let tile = grid.points[i][j]!
                     gridViewMap[tile.getIdentifier()] = tileView
@@ -64,10 +73,10 @@ class GridViewController
         if(grid.moveTile(from: from))
         {
             // Move corresponding view
-            let dx = CGFloat(Double(space.x - from.x) * tileSize)
-            let dy = CGFloat(Double(space.y - from.y) * tileSize)
+            let dx = CGFloat(space.x - from.x) * tileSize.width
+            let dy = CGFloat(space.y - from.y) * tileSize.height
             let tileView = gridViewMap[tile!.getIdentifier()]
-            UIView.animateKeyframes(withDuration: 0.05, delay: 0.0, options: UIView.KeyframeAnimationOptions(rawValue: 7), animations:
+            UIView.animateKeyframes(withDuration: 0.1, delay: 0.0, options: UIView.KeyframeAnimationOptions(rawValue: 7), animations:
                 {
                     tileView!.frame.origin.x+=dx
                     tileView!.frame.origin.y+=dy
@@ -100,6 +109,18 @@ class GridViewController
                 tileView!.layer.add(animation, forKey: animation.keyPath)
                 tileView!.layer.shadowOpacity = 0.0
                 
+                let overlay: UIView = UIView(frame: CGRect(x: 0, y: 0, width: tileView!.frame.size.width, height: tileView!.frame.size.height))
+                overlay.backgroundColor = UIColor.yellow
+                tileView!.addSubview(overlay)
+
+                let overlayAnimation = CABasicAnimation(keyPath: "opacity")
+                //animation.beginTime = CACurrentMediaTime() + 0.5;
+                overlayAnimation.fromValue = 1.0
+                overlayAnimation.toValue = 0.0
+                overlayAnimation.duration = 0.4
+                overlay.layer.add(overlayAnimation, forKey: animation.keyPath)
+                overlay.layer.opacity = 0.0
+
                 var soundName = "boop"
                 if(grid.tilesInHomePosition == grid.gridSize.width * grid.gridSize.height - 1)
                 {
