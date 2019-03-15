@@ -37,10 +37,11 @@ class AIGridSolver
     
     @objc func makeAMove()
     {
-        if plan.isEmpty && !gridIsComplete
+        if (plan.isEmpty || grid.changedSinceLastMove) && !gridIsComplete
         {
-            // No plan, so we need to make one
+            // No plan, or something changed, so we need to make a new plan
             print("Creating plan...")
+            if !plan.isEmpty { plan.clearQueue() }
             var (nextDest, nextTile) = self.getNextTile()
             if nextTile == nil || nextDest == nil
             {
@@ -789,6 +790,13 @@ struct AIMoveQueue
     public var isEmpty: Bool
     {
         return head == nil
+    }
+    
+    public mutating func clearQueue()
+    {
+        head = nil
+        tail = nil
+        length = 0
     }
     
     class Node

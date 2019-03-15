@@ -19,6 +19,8 @@
 		1A8086B822032509008ADFA1 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8086B622032509008ADFA1 /* SettingsViewController.swift */; };
 		1A8086B922032509008ADFA1 /* SettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1A8086B722032509008ADFA1 /* SettingsViewController.xib */; };
 		1A8086BB2204910B008ADFA1 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8086BA2204910B008ADFA1 /* Settings.swift */; };
+		1A8BC1782212212300E644DE /* TileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8BC1772212212300E644DE /* TileViewController.swift */; };
+		1A8BC17A2217491900E644DE /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A8BC1792217491900E644DE /* Game.swift */; };
 		1A9F09F521DFDE62002591C1 /* GridViewConroller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A9F09F421DFDE62002591C1 /* GridViewConroller.swift */; };
 		1AE768A121DFDCF100329171 /* AIGridSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE768A021DFDCF100329171 /* AIGridSolver.swift */; };
 		1AE768A321DFDDB900329171 /* SliderGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE768A221DFDDB900329171 /* SliderGrid.swift */; };
@@ -39,6 +41,8 @@
 		1A8086B622032509008ADFA1 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		1A8086B722032509008ADFA1 /* SettingsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SettingsViewController.xib; sourceTree = "<group>"; };
 		1A8086BA2204910B008ADFA1 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		1A8BC1772212212300E644DE /* TileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileViewController.swift; sourceTree = "<group>"; };
+		1A8BC1792217491900E644DE /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
 		1A9F09F421DFDE62002591C1 /* GridViewConroller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridViewConroller.swift; sourceTree = "<group>"; };
 		1AE768A021DFDCF100329171 /* AIGridSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIGridSolver.swift; sourceTree = "<group>"; };
 		1AE768A221DFDDB900329171 /* SliderGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliderGrid.swift; sourceTree = "<group>"; };
@@ -76,8 +80,10 @@
 			children = (
 				1A76B94421C464D90048A4FB /* AppDelegate.swift */,
 				1A76B94621C464D90048A4FB /* ViewController.swift */,
+				1A8BC1792217491900E644DE /* Game.swift */,
 				1A9F09F421DFDE62002591C1 /* GridViewConroller.swift */,
 				1AE768A221DFDDB900329171 /* SliderGrid.swift */,
+				1A8BC1772212212300E644DE /* TileViewController.swift */,
 				1AE768A021DFDCF100329171 /* AIGridSolver.swift */,
 				1A76B94821C464D90048A4FB /* Main.storyboard */,
 				1A8086B622032509008ADFA1 /* SettingsViewController.swift */,
@@ -170,6 +176,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A8BC1782212212300E644DE /* TileViewController.swift in Sources */,
+				1A8BC17A2217491900E644DE /* Game.swift in Sources */,
 				1AE768A321DFDDB900329171 /* SliderGrid.swift in Sources */,
 				1A9F09F521DFDE62002591C1 /* GridViewConroller.swift in Sources */,
 				1A76B94721C464D90048A4FB /* ViewController.swift in Sources */,

@@ -69,6 +69,7 @@ class SettingsViewController: UIViewController {
         // Update Settings values to store any changes
         Settings.aiLevel = Int(aiLevelStepper.value)
         Settings.gridSize = GridSize(width: Int(gridWidthStepper.value), height: Int(gridHeightStepper.value))
+        Settings.defaultSpacePosition = GridPoint(x:Settings.gridSize.width - 1, y:Settings.gridSize.height - 1)
     }
 
 }

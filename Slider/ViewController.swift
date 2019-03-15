@@ -14,9 +14,8 @@ class ViewController: UIViewController
     @IBOutlet weak var sliderGrid: UIView!
     @IBOutlet weak var secondSliderGrid: UIView!
     
-    var grid: SliderGrid!
+    var game: Game!
     var gridController: GridViewController!
-    var otherGrid: SliderGrid!
     var otherGridController: GridViewController!
     var aiPlayer: AIGridSolver!
   
@@ -31,16 +30,12 @@ class ViewController: UIViewController
 
     func newGame()
     {
-        // Create main grid objects
-        self.grid = SliderGrid(size: Settings.gridSize, space: Settings.defaultSpacePosition)
-        self.gridController = GridViewController(grid: grid, view:sliderGrid)
+        // Create game object
+        self.game = Game(players: 2, size: Settings.gridSize, space: Settings.defaultSpacePosition)
         
-        // Scramble grid
-        grid.scramble(moves:Settings.gridSize.width * Settings.gridSize.height * 1000)
-        
-        // Create second grid
-        self.otherGrid = SliderGrid(originalGrid: self.grid)
-        self.otherGridController = GridViewController(grid: otherGrid, view:secondSliderGrid)
+        // Create view controllers for each grid
+        self.gridController = GridViewController(grid: game.grids[0], view:sliderGrid)
+        self.otherGridController = GridViewController(grid: game.grids[1], view:secondSliderGrid)
         
         // Create views
         self.gridController.createView()
@@ -52,6 +47,12 @@ class ViewController: UIViewController
             self.aiPlayer.end()
         }
         self.aiPlayer = AIGridSolver(gridController: self.otherGridController, level: Settings.aiLevel)
+
+        // Testing only! Add TileEffect to top left tile
+        if let theTile = game.grids[0].findTileWithHomePosition(point:GridPoint(x:4, y:2))
+        {
+            theTile.viewController?.addTileEffect(effect:SpaceSwitchTileEffect(tile:theTile))
+        }
     }
     
     @IBAction func newButtonPressed(_ sender: Any)
@@ -60,19 +61,19 @@ class ViewController: UIViewController
     }
     
     @IBAction func didSwipeRight(_ sender: UISwipeGestureRecognizer) {
-        gridController.moveTile(from:GridPoint(x:self.grid.space.x - 1, y: self.grid.space.y))
+        gridController.moveTile(from:GridPoint(x:game.grids[0].space.x - 1, y: game.grids[0].space.y))
     }
     
     @IBAction func didSwipeLeft(_ sender: UISwipeGestureRecognizer) {
-        gridController.moveTile(from:GridPoint(x:self.grid.space.x + 1, y: self.grid.space.y))
+        gridController.moveTile(from:GridPoint(x:game.grids[0].space.x + 1, y: game.grids[0].space.y))
     }
     
     @IBAction func didSwipeUp(_ sender: UISwipeGestureRecognizer) {
-        gridController.moveTile(from:GridPoint(x:self.grid.space.x, y: self.grid.space.y + 1))
+        gridController.moveTile(from:GridPoint(x:game.grids[0].space.x, y: game.grids[0].space.y + 1))
     }
     
     @IBAction func didSwipeDown(_ sender: UISwipeGestureRecognizer) {
-        gridController.moveTile(from:GridPoint(x:self.grid.space.x, y: self.grid.space.y - 1))
+        gridController.moveTile(from:GridPoint(x:game.grids[0].space.x, y: game.grids[0].space.y - 1))
     }
 
     @IBAction func completeSettingsChange(_ segue: UIStoryboardSegue) {

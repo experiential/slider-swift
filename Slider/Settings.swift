@@ -10,7 +10,7 @@ import Foundation
 
 class Settings
 {
-    static var gridSize = GridSize(width: 6, height: 6)
-    static var defaultSpacePosition = GridPoint(x: 2, y: 2)
-    static var aiLevel = 10
+    static var gridSize = GridSize(width: 5, height: 5)
+    static var defaultSpacePosition = GridPoint(x: 1, y: 2)
+    static var aiLevel = 100
 }
