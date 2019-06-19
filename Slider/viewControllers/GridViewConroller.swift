@@ -18,11 +18,13 @@ class GridViewController
     var gridViewMap = [String:TileViewController]()
     var player: AVAudioPlayer?
     var image: UIImage?
+    var gameViewController: ViewController
     
-    init(grid:SliderGrid, view:UIView)
+    init(grid:SliderGrid, view:UIView, parent:ViewController)
     {
         self.grid = grid
         self.view = view
+        self.gameViewController = parent
         
         grid.viewController = self
         
@@ -117,9 +119,9 @@ class GridViewController
         {
             // Tile was moved into position
             gridViewMap[tile.getIdentifier()]?.highlightTile()
-            
+            let gridComplete = grid.tilesInHomePosition == grid.gridSize.width * grid.gridSize.height - 1
             var soundName = "boop"
-            if(grid.tilesInHomePosition == grid.gridSize.width * grid.gridSize.height - 1)
+            if gridComplete
             {
                 soundName = "complete"
             }
@@ -142,6 +144,12 @@ class GridViewController
             {
                 print(error.localizedDescription)
             }
+            
+            if gridComplete
+            {
+                gameViewController.gridWasCompleted(grid: grid)
+            }
+            
         }
 
     }
@@ -150,6 +158,27 @@ class GridViewController
     {
         gridViewMap[oldTile.getIdentifier()]?.view?.removeFromSuperview()
         createTileViewAt(point: newTile.position)
+    }
+    
+    func tileSwappedWithTile(tile1:Tile, tile2:Tile)
+    {
+        // Move corresponding views
+        let dx = CGFloat(tile1.position.x - tile2.position.x) * tileSize.width
+        let dy = CGFloat(tile1.position.y - tile2.position.y) * tileSize.height
+        
+        let tileView1 = gridViewMap[tile1.getIdentifier()]!.view!
+        UIView.animateKeyframes(withDuration: 0.1, delay: 0.0, options: UIView.KeyframeAnimationOptions(rawValue: 7), animations:
+            {
+                tileView1.frame.origin.x+=dx
+                tileView1.frame.origin.y+=dy
+        },completion: { _ in self.checkTileInHomePosition(tile:tile1) } )
+        
+        let tileView2 = gridViewMap[tile2.getIdentifier()]!.view!
+        UIView.animateKeyframes(withDuration: 0.1, delay: 0.0, options: UIView.KeyframeAnimationOptions(rawValue: 7), animations:
+            {
+                tileView2.frame.origin.x-=dx
+                tileView2.frame.origin.y-=dy
+        },completion: { _ in self.checkTileInHomePosition(tile:tile2) } )
     }
 }
 

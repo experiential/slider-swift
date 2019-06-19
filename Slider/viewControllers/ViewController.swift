@@ -34,8 +34,8 @@ class ViewController: UIViewController
         self.game = Game(players: 2, size: Settings.gridSize, space: Settings.defaultSpacePosition)
         
         // Create view controllers for each grid
-        self.gridController = GridViewController(grid: game.grids[0], view:sliderGrid)
-        self.otherGridController = GridViewController(grid: game.grids[1], view:secondSliderGrid)
+        self.gridController = GridViewController(grid: game.grids[0], view:sliderGrid, parent:self)
+        self.otherGridController = GridViewController(grid: game.grids[1], view:secondSliderGrid, parent:self)
         
         // Create views
         self.gridController.createView()
@@ -52,6 +52,10 @@ class ViewController: UIViewController
         if let theTile = game.grids[0].findTileWithHomePosition(point:GridPoint(x:4, y:2))
         {
             theTile.viewController?.addTileEffect(effect:SpaceSwitchTileEffect(tile:theTile))
+        }
+        if let theTile = game.grids[1].findTileWithHomePosition(point:GridPoint(x:1, y:0))
+        {
+            theTile.viewController?.addTileEffect(effect:GridLockTileEffect(tile:theTile))
         }
     }
     
@@ -80,7 +84,13 @@ class ViewController: UIViewController
         print("DISMISS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         //self.dismiss(animated: true, completion: nil)
     }
-
+    
+    func gridWasCompleted(grid:SliderGrid)
+    {
+        game.grids[0].locked = true
+        game.grids[1].locked = true
+    }
+    
 }
 
 

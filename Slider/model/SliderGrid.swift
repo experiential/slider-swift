@@ -16,7 +16,8 @@ class SliderGrid
     var space: GridPoint
     var tilesInHomePosition = 0
     var originalSpace: GridPoint
-    var changedSinceLastMove: Bool = false
+    var changedSinceLastMove = false
+    var locked = false
     
     var viewController: GridViewController?
     
@@ -102,7 +103,7 @@ class SliderGrid
     func moveTile(from:GridPoint) -> Bool
     {
         // Check 'from point' is within bounds
-        if (from.x < 0 || from.y < 0 || from.x >= self.gridSize.width || from.y >= self.gridSize.height) { return false }
+        if (self.locked || from.x < 0 || from.y < 0 || from.x >= self.gridSize.width || from.y >= self.gridSize.height) { return false }
         
         let tile = points[from.y][from.x]
         if tile != nil
@@ -175,184 +176,87 @@ class SliderGrid
     {
         print("changeSpaceToTile called")
         if tile.grid !== self { return }
+
+        // Lock the grid from any moves while we do this
+        self.locked = true
         
-        // Check current position of specified tile and space: if they are an even number of moves apart, we have to pick a different tile, one that is an odd number of moves from the space... in this case we pick an adjacent one
-        
+        // Check current position of specified tile and space: if they are not *both* an even or odd number of moves from their original positions, we have swap two adjacent tiles to ensure the grid remains solvable
         let spaceDistance = abs(space.x - originalSpace.x) + abs(space.y - originalSpace.y)
-        var tileToSwap = tile
-        var tileFound = false
-        for direction in -1...3 // -1 will stand for the specified tile, the rest for tiles in each of the four directions
+        let tileDistance = abs(tile.position.x - tile.homePosition.x) + abs(tile.position.y - tile.homePosition.y)
+        
+        // Create a new tile to replace the space
+        let newTile = Tile(grid: self, position: space, homePosition: originalSpace)
+        points[space.y][space.x] = newTile
+        space = tile.position
+        originalSpace = tile.homePosition
+        points[tile.position.y][tile.position.x] = nil
+        
+        if let viewController = self.viewController
         {
-            if direction >= 0
+            viewController.spaceSwappedWithTile(oldTile:tile, newTile:newTile)
+        }
+        
+        if spaceDistance % 2 != tileDistance % 2
+        {
+            // We also need to swap two tiles to make the grid solvable. So that this doesn't seem totally random, let's swap the new tile we just created with some neighbouring tile.
+            var tileToSwap = tile
+            var tileFound = false
+            for direction in 0...3
             {
-                let newPoint = tile.position.getAdjacentPointIn(direction: direction)
+                let newPoint = newTile.position.getAdjacentPointIn(direction: direction)
                 if !self.gridPointIsOutOfBounds(point: newPoint) && newPoint != self.space
                 {
                     tileToSwap = self.getTileAt(point: newPoint)! // We checked for out of bounds and space, so must be a tile and therefore safe to unwrap.
+                    tileFound = true
+                    break
                 }
                 else
                 {
                     continue
                 }
             }
-            print("TileSwap: Checking tile at ",tileToSwap.position.x,",",tileToSwap.position.y)
-
-            let tileDistance = abs(tileToSwap.position.x - tileToSwap.homePosition.x) + abs(tileToSwap.position.y - tileToSwap.homePosition.y)
-            if spaceDistance % 2 == tileDistance % 2
+            
+            // If we found a neighbouring tile (this should always happen) then we can swap the tiles
+            if tileFound
             {
-                tileFound = true
-                break
-            }
-            else
-            {
-                print("TileSwap: Can't swap with tile at ",tileToSwap.position.x,",",tileToSwap.position.y)
-            }
-        }
-        
-        // Check that we actually found a tile that we can swap without making the grid unsolvable
-        if !tileFound { return }
-        print("TileSwap: Picked tile at ",tileToSwap.position.x,",",tileToSwap.position.y)
+                let newTilePosition = newTile.position
+                let tileToSwapPosition = tileToSwap.position
+                points[newTilePosition.y][newTilePosition.x] = tileToSwap
+                points[tileToSwapPosition.y][tileToSwapPosition.x] = newTile
+                tileToSwap.position = newTilePosition
+                newTile.position = tileToSwapPosition
 
-        // Create a new tile to replace the space
-        let newTile = Tile(grid: self, position: space, homePosition: originalSpace)
-        points[space.y][space.x] = newTile
-        space = tileToSwap.position
-        originalSpace = tileToSwap.homePosition
-        points[tileToSwap.position.y][tileToSwap.position.x] = nil
-        
-        if let viewController = self.viewController
-        {
-            viewController.spaceSwappedWithTile(oldTile:tileToSwap, newTile:newTile)
+                // Update view controller on the swap
+                if let viewController = self.viewController
+                {
+                    viewController.tileSwappedWithTile(tile1:newTile, tile2:tileToSwap)
+                }
+            }
         }
-        
-        if newTile.position != newTile.homePosition
-        {
-            tilesInHomePosition -= 1
-        }
+
+        recalculateTilesInHomePosition()
         
         changedSinceLastMove = true
-    }
-}
-
-class Tile: NSObject, NSCopying
-{
-    var grid: SliderGrid
-    var position: GridPoint
-    var homePosition: GridPoint
-    var tileEffect: TileEffect? = nil
-    var viewController: TileViewController?
-    
-    init(grid: SliderGrid, position:GridPoint, homePosition:GridPoint)
-    {
-        self.grid = grid
-        self.position = position
-        self.homePosition = homePosition
+        self.locked = false
     }
     
-    init(originalTile:Tile)
+    func recalculateTilesInHomePosition()
     {
-        self.grid = originalTile.grid
-        self.position = originalTile.position
-        self.homePosition = originalTile.homePosition
-    }
-    
-    func getIdentifier() -> String
-    {
-        return String(describing: self.homePosition.x) + "-" + String(describing: self.homePosition.y)
-    }
-    
-    func copy(with zone: NSZone? = nil) -> Any
-    {
-        return Tile(grid:self.grid, position:self.position, homePosition:self.homePosition)
-    }
-    
-    func isAdjacentTo(tile:Tile) -> Bool
-    {
-        return self.position.isAdjacentTo(point: tile.position)
-    }
-}
-
-// Base class for different types of tile bonus special effect
-public class TileEffect
-{
-    var tile: Tile
-    
-    init(tile:Tile)
-    {
-        self.tile = tile
-    }
-    
-    func tileWillMove() -> Bool { return true; }
-    
-    func tileDidMove() { }
-}
-
-// This TileEffect class switches the affected tile with the space: the space becomes the tile that would have existed at the place in the initial (complete) grid state, and the affected tile becomes the space.
-// NB! This must only be used on tiles that are an *odd number* of moves from the space in the completed grid state. Otherwise the grid becomes unsolvable.
-public class SpaceSwitchTileEffect: TileEffect
-{
-    override func tileDidMove()
-    {
-        if tile.position == tile.homePosition
+        self.tilesInHomePosition = 0
+        
+        for i in 0..<gridSize.height
         {
-            // Find the equivalent of this tile in the other (or the next) grid
-            let opponentGrid = tile.grid.game.getOpponentGridFor(grid: tile.grid)
-            if let opponentGrid = opponentGrid
+            for j in 0..<gridSize.width
             {
-                // Find the tile
-                let otherTile = opponentGrid.findTileWithHomePosition(point: tile.homePosition)
-                
-                // Swap space with this tile
-                if otherTile != nil { opponentGrid.changeSpaceToTile(tile:otherTile!) }
+                if let thisTile = points[i][j]
+                {
+                    if thisTile.homePosition == thisTile.position
+                    {
+                        self.tilesInHomePosition += 1
+                    }
+                }
             }
-
-            // Remove the tile effect
-            tile.viewController?.removeTileEffect(effect:self)
         }
     }
-}
-
-public struct GridPoint: Equatable
-{
-    var x: Int
-    var y: Int
-    
-    public static func == (lhs: GridPoint, rhs: GridPoint) -> Bool
-    {
-        return lhs.x == rhs.x && lhs.y == rhs.y
-    }
-
-    func isAdjacentTo(point:GridPoint) -> Bool
-    {
-        return self.gridDistanceTo(point:point) == 1
-    }
-
-    func gridDistanceTo(point:GridPoint) -> Int
-    {
-        return abs(self.x - point.x) + abs(self.y - point.y)
-    }
-    
-    public var description: String { return "GridPoint:\(x),\(y)" }
-    
-    // Directions are encoded as ints from 0-3, such that we can invert (xor with 3) the int value and get its opposite move, i.e. up <-> down, left <-> right. So, moves are coded as: Up: 3 (11), Down: 0 (00), Left: 1 (01), Right: 2 (10) That way we can always avoid quickly find the opposite direction
-    func getAdjacentPointIn(direction:Int) -> GridPoint
-    {
-        // Determine changes in x and y according to move type.
-        // Note that it would almost certainly be faster here to create a new GridPoint in each if clause, but it would be less readable and less obvious that we can only modify one of the x or y directions, and only by 1 or -1.
-        var dx = 0
-        var dy = 0
-        if direction == 0 { dy -= 1 }
-        else if direction == 1 { dx += 1 }
-        else if direction == 2 { dx -= 1 }
-        else if direction == 3 { dy += 1 }
-        
-        return GridPoint(x: self.x + dx, y: self.y + dy)
-    }
-}
-
-public struct GridSize
-{
-    let width: Int
-    let height: Int
 }
 

@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1A161B9022BA825400FE1D61 /* Tile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A161B8F22BA825400FE1D61 /* Tile.swift */; };
+		1A161B9222BA82A200FE1D61 /* TileEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A161B9122BA82A200FE1D61 /* TileEffect.swift */; };
+		1A161B9422BA82C900FE1D61 /* SpaceSwitchTileEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A161B9322BA82C900FE1D61 /* SpaceSwitchTileEffect.swift */; };
+		1A161B9622BA82E300FE1D61 /* GridLockTileEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A161B9522BA82E300FE1D61 /* GridLockTileEffect.swift */; };
+		1A161B9822BA82FF00FE1D61 /* GridPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A161B9722BA82FF00FE1D61 /* GridPoint.swift */; };
+		1A161B9A22BA831300FE1D61 /* GridSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A161B9922BA831300FE1D61 /* GridSize.swift */; };
+		1A161B9C22BA846000FE1D61 /* AIMoveQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A161B9B22BA846000FE1D61 /* AIMoveQueue.swift */; };
 		1A450CF921CB2C2E00AF5866 /* what-a-rush.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 1A450CF821CB2C2E00AF5866 /* what-a-rush.mp3 */; };
 		1A450CFB21CB2E5B00AF5866 /* boop.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1A450CFA21CB2E5B00AF5866 /* boop.wav */; };
 		1A450CFD21CB2E7600AF5866 /* complete.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1A450CFC21CB2E7600AF5866 /* complete.wav */; };
@@ -27,6 +34,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1A161B8F22BA825400FE1D61 /* Tile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tile.swift; sourceTree = "<group>"; };
+		1A161B9122BA82A200FE1D61 /* TileEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileEffect.swift; sourceTree = "<group>"; };
+		1A161B9322BA82C900FE1D61 /* SpaceSwitchTileEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceSwitchTileEffect.swift; sourceTree = "<group>"; };
+		1A161B9522BA82E300FE1D61 /* GridLockTileEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridLockTileEffect.swift; sourceTree = "<group>"; };
+		1A161B9722BA82FF00FE1D61 /* GridPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridPoint.swift; sourceTree = "<group>"; };
+		1A161B9922BA831300FE1D61 /* GridSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridSize.swift; sourceTree = "<group>"; };
+		1A161B9B22BA846000FE1D61 /* AIMoveQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMoveQueue.swift; sourceTree = "<group>"; };
 		1A450CF821CB2C2E00AF5866 /* what-a-rush.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "what-a-rush.mp3"; sourceTree = "<group>"; };
 		1A450CFA21CB2E5B00AF5866 /* boop.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = boop.wav; sourceTree = "<group>"; };
 		1A450CFC21CB2E7600AF5866 /* complete.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = complete.wav; sourceTree = "<group>"; };
@@ -59,6 +73,42 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1A161B8C22BA80EA00FE1D61 /* model */ = {
+			isa = PBXGroup;
+			children = (
+				1A8BC1792217491900E644DE /* Game.swift */,
+				1AE768A221DFDDB900329171 /* SliderGrid.swift */,
+				1A161B8F22BA825400FE1D61 /* Tile.swift */,
+				1A161B9122BA82A200FE1D61 /* TileEffect.swift */,
+				1A161B9322BA82C900FE1D61 /* SpaceSwitchTileEffect.swift */,
+				1A161B9522BA82E300FE1D61 /* GridLockTileEffect.swift */,
+				1A161B9722BA82FF00FE1D61 /* GridPoint.swift */,
+				1A161B9922BA831300FE1D61 /* GridSize.swift */,
+			);
+			path = model;
+			sourceTree = "<group>";
+		};
+		1A161B8D22BA80F600FE1D61 /* viewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				1A76B94621C464D90048A4FB /* ViewController.swift */,
+				1A9F09F421DFDE62002591C1 /* GridViewConroller.swift */,
+				1A8BC1772212212300E644DE /* TileViewController.swift */,
+				1A8086B622032509008ADFA1 /* SettingsViewController.swift */,
+				1A8086B722032509008ADFA1 /* SettingsViewController.xib */,
+			);
+			path = viewControllers;
+			sourceTree = "<group>";
+		};
+		1A161B8E22BA812A00FE1D61 /* ai */ = {
+			isa = PBXGroup;
+			children = (
+				1AE768A021DFDCF100329171 /* AIGridSolver.swift */,
+				1A161B9B22BA846000FE1D61 /* AIMoveQueue.swift */,
+			);
+			path = ai;
+			sourceTree = "<group>";
+		};
 		1A76B93821C464D80048A4FB = {
 			isa = PBXGroup;
 			children = (
@@ -79,16 +129,11 @@
 			isa = PBXGroup;
 			children = (
 				1A76B94421C464D90048A4FB /* AppDelegate.swift */,
-				1A76B94621C464D90048A4FB /* ViewController.swift */,
-				1A8BC1792217491900E644DE /* Game.swift */,
-				1A9F09F421DFDE62002591C1 /* GridViewConroller.swift */,
-				1AE768A221DFDDB900329171 /* SliderGrid.swift */,
-				1A8BC1772212212300E644DE /* TileViewController.swift */,
-				1AE768A021DFDCF100329171 /* AIGridSolver.swift */,
-				1A76B94821C464D90048A4FB /* Main.storyboard */,
-				1A8086B622032509008ADFA1 /* SettingsViewController.swift */,
 				1A8086BA2204910B008ADFA1 /* Settings.swift */,
-				1A8086B722032509008ADFA1 /* SettingsViewController.xib */,
+				1A161B8D22BA80F600FE1D61 /* viewControllers */,
+				1A161B8C22BA80EA00FE1D61 /* model */,
+				1A161B8E22BA812A00FE1D61 /* ai */,
+				1A76B94821C464D90048A4FB /* Main.storyboard */,
 				1A76B95621C7DB4F0048A4FB /* Live-better-Stock-pot-on--011.jpg */,
 				1A76B94B21C464DA0048A4FB /* Assets.xcassets */,
 				1A76B94D21C464DA0048A4FB /* LaunchScreen.storyboard */,
@@ -176,15 +221,22 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A161B9A22BA831300FE1D61 /* GridSize.swift in Sources */,
 				1A8BC1782212212300E644DE /* TileViewController.swift in Sources */,
+				1A161B9C22BA846000FE1D61 /* AIMoveQueue.swift in Sources */,
 				1A8BC17A2217491900E644DE /* Game.swift in Sources */,
 				1AE768A321DFDDB900329171 /* SliderGrid.swift in Sources */,
 				1A9F09F521DFDE62002591C1 /* GridViewConroller.swift in Sources */,
+				1A161B9222BA82A200FE1D61 /* TileEffect.swift in Sources */,
 				1A76B94721C464D90048A4FB /* ViewController.swift in Sources */,
+				1A161B9822BA82FF00FE1D61 /* GridPoint.swift in Sources */,
 				1AE768A121DFDCF100329171 /* AIGridSolver.swift in Sources */,
+				1A161B9422BA82C900FE1D61 /* SpaceSwitchTileEffect.swift in Sources */,
 				1A8086BB2204910B008ADFA1 /* Settings.swift in Sources */,
+				1A161B9022BA825400FE1D61 /* Tile.swift in Sources */,
 				1A76B94521C464D90048A4FB /* AppDelegate.swift in Sources */,
 				1A8086B822032509008ADFA1 /* SettingsViewController.swift in Sources */,
+				1A161B9622BA82E300FE1D61 /* GridLockTileEffect.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
